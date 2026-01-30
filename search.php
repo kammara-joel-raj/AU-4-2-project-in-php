@@ -7,6 +7,7 @@ $query = isset($_GET['q']) ? strtolower($_GET['q']) : '';
 $results = [];
 
 foreach($products as $p) {
+    // FIXED: Changed 'desc' to 'description' to match database
     if (strpos(strtolower($p['name']), $query) !== false || strpos(strtolower($p['description']), $query) !== false) {
         $results[] = $p;
     }
@@ -34,7 +35,7 @@ if (count($results) == 0 && $query == "hoddie") {
         <div class="product-grid" style="margin-top: 2rem; border: var(--border-thick);">
             <?php foreach ($results as $product): ?>
                 <div class="product-card">
-                    <!-- FIXED VARIABLES -->
+                    <!-- FIXED: img_bg -> image_bg_color, img_text -> image_text -->
                     <div class="card-img" style="background: <?php echo $product['image_bg_color']; ?>; color: #fff;">
                         <?php echo $product['image_text']; ?>
                     </div>
