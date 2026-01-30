@@ -73,6 +73,11 @@ $category = isset($_GET['category']) ? $_GET['category'] : 'all';
                         <span><?php echo $product['brand']; ?></span>
                         <span style="font-weight: bold;">₹<?php echo $product['price']; ?></span>
                     </div>
+
+                    <!-- ADD TO CART BUTTON (Using stopPropagation to prevent clicking the card) -->
+                    <a href="cart_action.php?action=add&id=<?php echo $product['id']; ?>" onclick="event.stopPropagation();">
+                        <button class="btn" style="width: 100%; margin-top: 15px;">ADD TO CART</button>
+                    </a>
                 </div>
             </div>
         <?php endforeach; ?>

@@ -1,0 +1,32 @@
+-- Create Users Table
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    full_name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create Products Table
+CREATE TABLE products (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    category VARCHAR(50) NOT NULL,
+    brand VARCHAR(100),
+    price DECIMAL(10,2) NOT NULL,
+    rating DECIMAL(2,1) DEFAULT 5.0,
+    reviews INT DEFAULT 0,
+    origin VARCHAR(50) DEFAULT 'India',
+    description VARCHAR(255),
+    long_description TEXT,
+    tag VARCHAR(50),
+    image_bg_color VARCHAR(20) DEFAULT '#222',
+    image_text VARCHAR(100)
+);
+
+-- Insert Demo Data (The same data we had in the array)
+INSERT INTO products (name, category, brand, price, rating, reviews, description, long_description, tag, image_bg_color, image_text) VALUES 
+('Senate House ''26 Hoodie', 'apparel', 'AU Heritage', 1899.00, 4.8, 124, 'Navy Blue // Heavyweight Cotton', 'Official University merchandise. Crafted from 400GSM heavyweight cotton fleece. Features high-density embroidery.', 'BESTSELLER', '#222', '[HOODIE_IMG]'),
+('Heritage Graphic Tee', 'apparel', 'AU Basics', 799.00, 4.5, 89, 'Vintage Wash // Archival', 'A tribute to the 1926 founding year. Features screen-printed archival photograph.', '', '#f4f4f4', '[TEE_IMG]'),
+('The Vice Chancellor Jacket', 'premium', 'AU Premium', 4999.00, 5.0, 12, 'Leather Sleeves // Exclusive', 'The pinnacle of the collection. Wool body with genuine leather sleeves.', 'EXCLUSIVE', '#002147', '[JACKET_IMG]'),
+('Admin Block Tote', 'accessories', 'Eco-AU', 499.00, 4.2, 45, 'Heavy Canvas // Eco-Friendly', 'Durable canvas tote bag suitable for laptops and textbooks.', 'NEW', '#eee', '[TOTE_IMG]');
