@@ -30,8 +30,9 @@ include 'includes/header.php';
 <?php include 'includes/navbar.php'; ?>
 
 <div class="pdp-grid">
-    <div class="pdp-images" style="background: <?php echo $item['img_bg']; ?>; color: #fff;">
-        <h1 style="font-size: 3rem; opacity: 0.5;"><?php echo $item['img_text']; ?></h1>
+    <!-- FIXED: Variable names match DB -->
+    <div class="pdp-images" style="background: <?php echo $item['image_bg_color']; ?>; color: #fff;">
+        <h1 style="font-size: 3rem; opacity: 0.5;"><?php echo $item['image_text']; ?></h1>
     </div>
 
     <div class="pdp-info">
@@ -42,7 +43,9 @@ include 'includes/header.php';
             <span><?php echo $item['rating']; ?> / 5.0</span>
         </div>
         <h2 style="font-size: 2rem; color: var(--au-blue); margin-bottom: 2rem;">₹<?php echo $item['price']; ?></h2>
-        <p style="line-height: 1.8; margin-bottom: 2rem; max-width: 500px;"><?php echo $item['long_desc']; ?></p>
+        
+        <!-- FIXED: long_desc -> long_description -->
+        <p style="line-height: 1.8; margin-bottom: 2rem; max-width: 500px;"><?php echo $item['long_description']; ?></p>
 
         <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
             <select style="padding: 15px; border: var(--border-thick); font-family: var(--font-tech); min-width: 100px;">
@@ -52,7 +55,9 @@ include 'includes/header.php';
         </div>
 
         <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-            <button class="btn btn-add-cart" style="background: var(--au-blue); color: var(--au-gold); flex: 1; min-width: 200px;">ADD TO CART</button>
+            <a href="cart_action.php?action=add&id=<?php echo $item['id']; ?>" style="flex: 1;">
+                <button class="btn btn-add-cart" style="background: var(--au-blue); color: var(--au-gold); width: 100%;">ADD TO CART</button>
+            </a>
             <button class="btn" onclick="openTryOn()" style="background: #000; color: #00f3ff; border: 1px solid #00f3ff; flex: 1; min-width: 200px;">
                 <span style="font-size: 1.2rem;">👁‍🗨</span> VIRTUAL TRY-ON
             </button>
@@ -62,12 +67,10 @@ include 'includes/header.php';
     </div>
 </div>
 
-<!-- VIRTUAL TRY-ON MODAL -->
+<!-- VIRTUAL TRY-ON MODAL (Same as before) -->
 <div id="tryon-modal">
     <div class="tryon-content">
         <button class="tryon-close" onclick="closeTryOn()">CLOSE_SIMULATION [X]</button>
-        
-        <!-- Left Panel -->
         <div style="border-right: 1px solid #333; padding: 2rem;">
             <h3>> ASSET_LOADED</h3>
             <p style="margin-top: 1rem; color: #666;"><?php echo $item['name']; ?></p>
@@ -76,8 +79,6 @@ include 'includes/header.php';
                 <p>> TEXTURE: 4K</p>
             </div>
         </div>
-
-        <!-- Center Scan Area -->
         <div style="position: relative; background: #050505; display: flex; align-items: center; justify-content: center;">
             <div class="scan-line"></div>
             <div style="text-align: center;">
@@ -86,8 +87,6 @@ include 'includes/header.php';
                 <p style="margin-top: 10px; font-size: 0.8rem; color: #666;">Allowing access to camera...</p>
             </div>
         </div>
-
-        <!-- Right Panel -->
         <div style="border-left: 1px solid #333; padding: 2rem;">
             <h3>> FIT_ANALYSIS</h3>
             <p style="margin-top: 20px;">SIZE PREDICTION: L</p>

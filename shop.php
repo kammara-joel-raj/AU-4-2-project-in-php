@@ -56,8 +56,9 @@ $category = isset($_GET['category']) ? $_GET['category'] : 'all';
                     <span class="badge"><?php echo $product['tag']; ?></span>
                 <?php endif; ?>
                 
-                <div class="card-img" style="background: <?php echo $product['img_bg']; ?>; color: <?php echo ($product['img_bg'] == '#222' || $product['img_bg'] == '#002147') ? 'white' : 'black'; ?>;">
-                    <?php echo $product['img_text']; ?>
+                <!-- FIXED: Updated variable names to match SQL database -->
+                <div class="card-img" style="background: <?php echo $product['image_bg_color']; ?>; color: <?php echo ($product['image_bg_color'] == '#222' || $product['image_bg_color'] == '#002147') ? 'white' : 'black'; ?>;">
+                    <?php echo $product['image_text']; ?>
                 </div>
                 
                 <div>
@@ -74,7 +75,7 @@ $category = isset($_GET['category']) ? $_GET['category'] : 'all';
                         <span style="font-weight: bold;">₹<?php echo $product['price']; ?></span>
                     </div>
 
-                    <!-- ADD TO CART BUTTON (Using stopPropagation to prevent clicking the card) -->
+                    <!-- ADD TO CART BUTTON -->
                     <a href="cart_action.php?action=add&id=<?php echo $product['id']; ?>" onclick="event.stopPropagation();">
                         <button class="btn" style="width: 100%; margin-top: 15px;">ADD TO CART</button>
                     </a>

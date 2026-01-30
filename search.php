@@ -6,14 +6,12 @@ include 'data/products.php';
 $query = isset($_GET['q']) ? strtolower($_GET['q']) : '';
 $results = [];
 
-// Simulate Search Logic
 foreach($products as $p) {
-    if (strpos(strtolower($p['name']), $query) !== false || strpos(strtolower($p['desc']), $query) !== false) {
+    if (strpos(strtolower($p['name']), $query) !== false || strpos(strtolower($p['description']), $query) !== false) {
         $results[] = $p;
     }
 }
 
-// "Did you mean?" Logic
 $suggestion = "";
 if (count($results) == 0 && $query == "hoddie") {
     $suggestion = "hoodie";
@@ -36,8 +34,9 @@ if (count($results) == 0 && $query == "hoddie") {
         <div class="product-grid" style="margin-top: 2rem; border: var(--border-thick);">
             <?php foreach ($results as $product): ?>
                 <div class="product-card">
-                    <div class="card-img" style="background: <?php echo $product['img_bg']; ?>; color: #fff;">
-                        <?php echo $product['img_text']; ?>
+                    <!-- FIXED VARIABLES -->
+                    <div class="card-img" style="background: <?php echo $product['image_bg_color']; ?>; color: #fff;">
+                        <?php echo $product['image_text']; ?>
                     </div>
                     <div>
                         <h3><?php echo $product['name']; ?></h3>
