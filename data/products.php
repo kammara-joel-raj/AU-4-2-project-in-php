@@ -6,6 +6,7 @@ try {
     $stmt = $pdo->query("SELECT * FROM products");
     $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
+    // If DB fails, return empty array to prevent crash
     $products = [];
 }
 
