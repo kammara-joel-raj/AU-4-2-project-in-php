@@ -7,7 +7,7 @@ include 'includes/header.php';
 
 <?php include 'includes/navbar.php'; ?>
 
-<!-- HERO (Same as before) -->
+<!-- HERO -->
 <header class="grid-2" style="min-height: 90vh; border-bottom: var(--border-thick);">
     <div style="padding: 4rem; display: flex; flex-direction: column; justify-content: center; border-right: var(--border-thick);">
         <div>
@@ -31,7 +31,7 @@ include 'includes/header.php';
     </div>
 </header>
 
-<!-- TOP CATEGORIES (NEW SECTION) -->
+<!-- TOP CATEGORIES -->
 <section style="padding: 4rem 3%; border-bottom: var(--border-thick);">
     <h2 style="font-size: 2rem; margin-bottom: 2rem; text-align: center;">BROWSE ARCHIVES</h2>
     <div class="grid-2" style="gap: 2rem;">
@@ -50,8 +50,9 @@ include 'includes/header.php';
 <section style="padding: 6rem 3%;">
     <h2 style="font-size: 3rem; margin-bottom: 3rem; text-align: center;">TRENDING NOW</h2>
     <div class="product-grid" style="border: var(--border-thick);">
-        <!-- Static Preview Items -->
-        <div class="product-card">
+        
+        <!-- Fixed: Added Clickable Navigation -->
+        <div class="product-card" onclick="window.location.href='product.php?id=1'" style="cursor: pointer;">
             <span class="badge">POPULAR</span>
             <div class="card-img">
                  <img src="uploads/products/hoodie.avif" alt="Hoodie">
@@ -63,14 +64,16 @@ include 'includes/header.php';
                 </div>
             </div>
         </div>
-        <div class="product-card">
+        
+        <!-- Fixed: Added Clickable Navigation -->
+        <div class="product-card" onclick="window.location.href='product.php?id=2'" style="cursor: pointer;">
             <div class="card-img">
-                <img src="uploads/products/T-shirt.webp" alt="Hoodie">
+                <img src="uploads/products/T-shirt.webp" alt="T-Shirt">
             </div>
             <div>
-                <h3 style="font-size: 1.5rem;">Heritage Canvas</h3>
+                <h3 style="font-size: 1.5rem;">Heritage Graphic Tee</h3>
                 <div style="display: flex; justify-content: space-between; margin-top: 10px; font-family: var(--font-tech);">
-                    <span>Organic Canvas</span><span>₹599</span>
+                    <span>Vintage Wash</span><span>₹799</span>
                 </div>
             </div>
         </div>

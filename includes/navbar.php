@@ -20,7 +20,10 @@ if (isset($_SESSION['cart'])) {
 </div>
 
 <nav class="navbar">
-    <div class="logo glitch" data-text="AU.ARCHIVES™">AU.ARCHIVES™</div>
+    <!-- Updated Logo: Clickable and Redirects to Home -->
+    <a href="index.php" style="text-decoration: none; color: inherit;">
+        <div class="logo glitch" data-text="ANDHRA UNIVERSITY">ANDHRA UNIVERSITY</div>
+    </a>
     
     <div class="nav-search" style="flex-grow: 1; max-width: 400px; margin: 0 2rem;">
         <form action="search.php" method="GET" style="display: flex;">
