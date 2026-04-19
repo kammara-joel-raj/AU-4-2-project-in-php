@@ -1,4 +1,13 @@
 <footer style="background: var(--au-blue); color: var(--paper-white); padding: 4rem; text-align: center; border-top: var(--border-thick);">
+        
+        <!-- Added Footer Link Navigation -->
+        <div style="display: flex; justify-content: center; gap: 2rem; margin-bottom: 3rem; flex-wrap: wrap; font-family: var(--font-tech); text-transform: uppercase;">
+            <a href="about.php" style="color: var(--au-gold); text-decoration: none;">About</a>
+            <a href="locator.php" style="color: var(--au-gold); text-decoration: none;">Store Locator</a>
+            <a href="blog.php" style="color: var(--au-gold); text-decoration: none;">Blog</a>
+            <a href="faq.php" style="color: var(--au-gold); text-decoration: none;">Support / FAQ</a>
+        </div>
+
         <h2 style="font-size: 5vw; opacity: 0.3;">ANDHRA UNIVERSITY</h2>
         <p style="font-family: var(--font-tech); margin-top: 2rem;">DESIGNED IN VIZAG. WORN WORLDWIDE.</p>
     </footer>
