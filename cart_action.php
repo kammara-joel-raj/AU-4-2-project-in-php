@@ -1,37 +1,48 @@
 <?php
-require_once 'includes/db.php';
+require_once 'includes/bootstrap.php';
 
-// Initialize cart if not exists
-if (!isset($_SESSION['cart'])) {
-    $_SESSION['cart'] = [];
-}
-
-$action = isset($_GET['action']) ? $_GET['action'] : '';
-$id = isset($_GET['id']) ? intval($_GET['id']) : 0;
-
-if ($action == 'add' && $id > 0) {
-    // If item exists, increase quantity, else add it
-    if (isset($_SESSION['cart'][$id])) {
-        $_SESSION['cart'][$id]++;
-    } else {
-        $_SESSION['cart'][$id] = 1;
-    }
-    // Redirect back to previous page
-    header("Location: " . $_SERVER['HTTP_REFERER']);
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo 'Method Not Allowed';
     exit;
 }
 
-if ($action == 'remove' && $id > 0) {
-    if (isset($_SESSION['cart'][$id])) {
-        unset($_SESSION['cart'][$id]);
-    }
-    header("Location: cart.php");
+require_valid_csrf();
+
+$action = $_POST['action'] ?? '';
+$productId = (int) ($_POST['product_id'] ?? 0);
+$size = $_POST['size'] ?? 'M';
+$quantity = (int) ($_POST['quantity'] ?? 1);
+$redirect = trim((string) ($_POST['redirect'] ?? ''));
+
+if ($redirect === '' || str_contains($redirect, '://')) {
+    $redirect = 'cart.php';
+}
+
+switch ($action) {
+    case 'add':
+        $result = add_item_to_cart($pdo, $productId, $size, $quantity);
+        break;
+    case 'update':
+        $result = update_cart_quantity($pdo, $productId, $size, $quantity);
+        break;
+    case 'remove':
+        $result = remove_item_from_cart($pdo, $productId, $size);
+        break;
+    case 'clear':
+        $result = clear_current_cart($pdo);
+        break;
+    default:
+        $result = ['success' => false, 'message' => 'Unknown cart action.'];
+        break;
+}
+
+if (wants_json()) {
+    header('Content-Type: application/json');
+    http_response_code($result['success'] ? 200 : 422);
+    echo json_encode($result);
     exit;
 }
 
-if ($action == 'clear') {
-    $_SESSION['cart'] = [];
-    header("Location: cart.php");
-    exit;
-}
-?>
+session_flash($result['success'] ? 'success' : 'error', $result['message']);
+safe_redirect($redirect);

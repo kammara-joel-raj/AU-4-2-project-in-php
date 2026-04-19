@@ -1,245 +1,246 @@
-<?php 
-$pageTitle = "AU ARCHIVES // SUPPLY";
-include 'includes/header.php'; 
-include 'data/products.php';
+<?php
+require_once 'includes/bootstrap.php';
 
-$category = isset($_GET['category']) ? $_GET['category'] : 'all';
+$pageTitle = 'AU // SHOP ARCHIVES';
+
+$current_category = $_GET['category'] ?? 'all';
+$max_price = isset($_GET['max_price']) ? (int) $_GET['max_price'] : 5000;
+$min_rating = isset($_GET['min_rating']) ? (float) $_GET['min_rating'] : 0;
+$sort = $_GET['sort'] ?? 'latest';
+$page = max(1, (int) ($_GET['page'] ?? 1));
+
+$catalog = fetch_products_paginated($pdo, [
+    'category' => $current_category,
+    'max_price' => $max_price,
+    'min_rating' => $min_rating,
+    'sort' => $sort,
+    'page' => $page,
+    'per_page' => SHOP_PRODUCTS_PER_PAGE,
+]);
+
+$wishlistIds = is_logged_in() ? wishlist_ids($pdo) : [];
+
+function shop_query(array $overrides = [])
+{
+    $params = array_merge($_GET, $overrides);
+    unset($params['page']);
+    if (isset($overrides['page'])) {
+        $params['page'] = $overrides['page'];
+    }
+
+    return http_build_query($params);
+}
+
+include 'includes/header.php';
 ?>
+
 <style>
-    /* ===== LAYOUT ===== */
-    .shop-layout {
-        display: grid;
-        grid-template-columns: 280px 1fr;
-        min-height: 100vh;
-    }
-
-    /* ===== MODERNIZED SIDEBAR FILTERS ===== */
-    .sidebar {
-        padding: 2rem;
-        border-right: var(--border-thick);
-        background: #fafafa;
-    }
-    
-    .filter-section {
-        margin-bottom: 2rem;
-        background: #fff;
-        padding: 1.5rem;
-        border-radius: 12px;
-        border: 1px solid #eee;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-    }
-
-    .filter-title {
-        font-family: var(--font-street);
-        font-weight: 800;
-        font-size: 1.1rem;
-        margin-bottom: 1rem;
-        display: flex;
-        align-items: center;
-        text-transform: uppercase;
-        color: var(--au-blue);
-        border-bottom: 2px solid #f4f4f4;
-        padding-bottom: 10px;
-    }
-
-    .category-list { display: flex; flex-direction: column; gap: 8px; }
-
-    .category-btn {
-        display: block;
-        padding: 10px 15px;
-        border-radius: 8px;
-        font-size: 0.95rem;
-        font-weight: 500;
-        color: #555;
-        background: #f9f9f9;
-        text-decoration: none;
-        transition: all 0.2s ease;
-        border: 1px solid transparent;
-    }
-
-    .category-btn:hover, .category-btn.active {
-        background: var(--au-blue);
-        color: var(--au-gold);
-        border-color: var(--au-blue);
-        transform: translateX(4px);
-    }
-
-    .price-slider-container { padding: 10px 0; }
-    
-    .custom-range {
-        width: 100%; appearance: none; height: 6px; border-radius: 3px; background: #e0e0e0; outline: none; margin-bottom: 10px;
-    }
-    .custom-range::-webkit-slider-thumb {
-        appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--au-blue); cursor: pointer; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    }
-    
-    .price-labels { display: flex; justify-content: space-between; font-family: var(--font-tech); font-size: 0.9rem; font-weight: bold; color: #444; }
-    
-    .rating-label { display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 8px 0; font-size: 0.95rem; color: #555; }
-    .rating-label input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: var(--au-blue); }
-
-    .mobile-filter-toggle { 
-        display: none; width: 100%; padding: 15px; background: var(--au-blue); color: var(--au-gold); 
-        font-weight: bold; text-align: center; font-family: var(--font-tech); border: none; cursor: pointer; 
-        text-transform: uppercase; letter-spacing: 1px; 
-    }
-
-    .stars { color: var(--au-gold); letter-spacing: 2px; }
-
-    /* ===== PRODUCT GRID ===== */
-    .product-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(260px, 300px));
-        justify-content: center;
-        gap: 15px;
-        padding: 20px;
-    }
-
-    .product-card {
-        background: #fff;
-        border: 1px solid #ddd;
-        padding: 15px;
-        transition: 0.3s;
-        border-radius: 10px;
-        position: relative;
-    }
-
-    .product-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-    }
-
-    .card-img {
-        width: 100%;
-        height: 220px;
-        background: #f5f5f5;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
-        border-radius: 8px;
-        margin-bottom: 10px;
-    }
-
-    .card-img img {
-        max-width: 100%;
-        max-height: 100%;
-        object-fit: contain;
-    }
-
-    .product-card h3 { font-size: 1.2rem; margin-top: 10px; }
-    .badge { position: absolute; top: 25px; right: 25px; background: var(--au-blue); color: #fff; padding: 5px 10px; font-family: var(--font-tech); font-size: 0.7rem; transform: rotate(5deg); z-index: 10;}
-
-    /* ===== MOBILE RESPONSIVE ===== */
+    .shop-layout { display: grid; grid-template-columns: 280px 1fr; gap: 2rem; padding: 3rem 4rem; min-height: 80vh; background: var(--paper-white); }
+    .sidebar { border-right: var(--border-thick); padding-right: 2rem; }
+    .product-grid-shop { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 2rem; align-content: start; }
+    .product-card-shop { border: 1px solid #ccc; padding: 1rem; background: #fff; transition: 0.3s; display: flex; flex-direction: column; position: relative; }
+    .product-card-shop:hover { border-color: var(--au-blue); box-shadow: 6px 6px 0px var(--au-blue); transform: translateY(-3px); }
+    .product-img { width: 100%; height: 250px; object-fit: contain; background: var(--off-white); margin-bottom: 1rem; }
+    .filter-section { margin-bottom: 2.5rem; }
+    .filter-section h4 { font-family: var(--font-varsity); margin-bottom: 1rem; font-size: 1.2rem; color: #222; }
+    .cat-list { list-style: none; padding: 0; }
+    .cat-list li { margin-bottom: 0.5rem; }
+    .cat-list a { text-decoration: none; color: #555; font-family: var(--font-tech); display: block; padding: 8px 12px; border: 1px solid transparent; transition: 0.2s; }
+    .cat-list a:hover, .cat-list a.active { background: var(--au-blue); color: var(--paper-white); border-color: var(--au-blue); }
+    .range-slider { width: 100%; accent-color: var(--au-blue); cursor: pointer; }
+    .price-labels { display: flex; justify-content: space-between; font-family: var(--font-tech); font-size: 0.85rem; margin-top: 10px; color: #555; }
+    .sort-select { width: 100%; padding: 10px; border: 1px solid #ccc; font-family: var(--font-tech); background: #fff; }
+    .wishlist-btn { background: transparent; border: 1px solid #ccc; padding: 8px; font-family: var(--font-tech); cursor: pointer; }
+    .wishlist-btn.active { border-color: var(--au-blue); color: var(--au-blue); }
+    .pagination { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 2rem; font-family: var(--font-tech); }
+    .pagination a, .pagination span { padding: 10px 14px; border: 1px solid #ccc; text-decoration: none; color: inherit; }
+    .pagination .current { background: var(--au-blue); color: #fff; border-color: var(--au-blue); }
     @media (max-width: 768px) {
-        .shop-layout { grid-template-columns: 1fr; }
-        .mobile-filter-toggle { display: block; }
-        .sidebar { display: none; padding: 1.5rem; }
-        .sidebar.active { display: block; background: #fafafa; border-bottom: var(--border-thick); }
-        .product-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); padding: 15px; }
+        .shop-layout { grid-template-columns: 1fr; padding: 2rem; }
+        .sidebar { border-right: none; border-bottom: var(--border-thick); padding-right: 0; padding-bottom: 2rem; }
     }
 </style>
 </head>
 <body>
-
 <?php include 'includes/navbar.php'; ?>
 
-<!-- Mobile Sidebar Toggle -->
-<button class="mobile-filter-toggle" onclick="document.querySelector('.sidebar').classList.toggle('active')">
-    <span style="margin-right: 8px;">≡</span> Toggle Filters
-</button>
-
 <div class="shop-layout">
-    <!-- SIDEBAR -->
     <aside class="sidebar">
-        
         <div class="filter-section">
-            <span class="filter-title">Categories</span>
-            <div class="category-list">
-                <a href="shop.php?category=all" class="category-btn <?php echo $category == 'all' ? 'active' : ''; ?>">All Items</a>
-                <a href="shop.php?category=apparel" class="category-btn <?php echo $category == 'apparel' ? 'active' : ''; ?>">Apparel</a>
-                <a href="shop.php?category=accessories" class="category-btn <?php echo $category == 'accessories' ? 'active' : ''; ?>">Accessories</a>
-            </div>
+            <h4>CATEGORIES</h4>
+            <ul class="cat-list">
+                <li><a href="?<?= shop_query(['category' => 'all', 'page' => 1]) ?>" class="<?= $current_category === 'all' ? 'active' : '' ?>">All Items</a></li>
+                <li><a href="?<?= shop_query(['category' => 'apparel', 'page' => 1]) ?>" class="<?= $current_category === 'apparel' ? 'active' : '' ?>">Apparel</a></li>
+                <li><a href="?<?= shop_query(['category' => 'premium', 'page' => 1]) ?>" class="<?= $current_category === 'premium' ? 'active' : '' ?>">Premium</a></li>
+                <li><a href="?<?= shop_query(['category' => 'accessories', 'page' => 1]) ?>" class="<?= $current_category === 'accessories' ? 'active' : '' ?>">Accessories</a></li>
+            </ul>
         </div>
 
-        <div class="filter-section">
-            <span class="filter-title">Price Range</span>
-            <div class="price-slider-container">
-                <input type="range" min="100" max="5000" value="5000" class="custom-range" id="priceRange" oninput="document.getElementById('maxPrice').innerText = '₹' + this.value">
+        <form action="shop.php" method="GET" id="filterForm">
+            <input type="hidden" name="category" value="<?= h($current_category) ?>">
+
+            <div class="filter-section">
+                <h4>PRICE RANGE</h4>
+                <input type="range" name="max_price" id="priceSlider" class="range-slider" min="100" max="10000" step="100" value="<?= $max_price ?>">
                 <div class="price-labels">
-                    <span>₹100</span>
-                    <span id="maxPrice">₹5000</span>
+                    <span>&#8377;100</span>
+                    <span style="font-weight: bold; color: var(--au-blue);">Max: &#8377;<span id="priceDisplay"><?= $max_price ?></span></span>
                 </div>
             </div>
-        </div>
 
-        <div class="filter-section">
-            <span class="filter-title">Rating</span>
-            <label class="rating-label">
-                <input type="checkbox" checked> <span class="stars">★★★★☆</span> & Up
-            </label>
-        </div>
+            <div class="filter-section">
+                <h4>RATING</h4>
+                <label style="font-family: var(--font-tech); font-size: 0.9rem; display: flex; align-items: center; gap: 8px; cursor: pointer; color: #555;">
+                    <input type="checkbox" name="min_rating" value="4.0" <?= $min_rating == 4.0 ? 'checked' : '' ?> onchange="document.getElementById('filterForm').submit()">
+                    <span style="color: #FFD700; letter-spacing: 2px;">★★★★☆</span> &amp; up
+                </label>
+            </div>
 
+            <div class="filter-section">
+                <h4>SORT</h4>
+                <select name="sort" class="sort-select" onchange="document.getElementById('filterForm').submit()">
+                    <option value="latest" <?= $sort === 'latest' ? 'selected' : '' ?>>Latest</option>
+                    <option value="price_asc" <?= $sort === 'price_asc' ? 'selected' : '' ?>>Price: Low to High</option>
+                    <option value="price_desc" <?= $sort === 'price_desc' ? 'selected' : '' ?>>Price: High to Low</option>
+                    <option value="rating_desc" <?= $sort === 'rating_desc' ? 'selected' : '' ?>>Rating</option>
+                </select>
+            </div>
+        </form>
     </aside>
 
-    <!-- PRODUCTS -->
-    <main class="product-grid">
+    <main>
+        <?php if (empty($catalog['items'])): ?>
+            <div style="padding: 4rem; text-align: center; border: 2px dashed #ccc; background: var(--off-white);">
+                <p style="font-family: var(--font-tech); color: #666; font-size: 1.2rem;">// NO ASSETS FOUND MATCHING YOUR FILTERS //</p>
+                <a href="shop.php" class="btn" style="margin-top: 1.5rem; display: inline-block;">RESET ARCHIVES</a>
+            </div>
+        <?php else: ?>
+            <div class="product-grid-shop">
+                <?php foreach ($catalog['items'] as $item): ?>
+                    <?php
+                    $defaultSize = product_sizes($item)[0] ?? 'M';
+                    $buttonStyle = 'flex: 1; border: 1px solid var(--au-blue);';
+                    if ((int) $item['stock_qty'] <= 0) {
+                        $buttonStyle .= ' opacity: 0.5;';
+                    }
+                    ?>
+                    <div class="product-card-shop">
+                        <?php if (!empty($item['tag'])): ?>
+                            <span class="badge" style="position: absolute; top: 10px; right: 10px; background: var(--au-blue); color: #fff; padding: 4px 8px; font-family: var(--font-tech); font-size: 0.7rem; z-index: 2;"><?= h($item['tag']) ?></span>
+                        <?php endif; ?>
 
-        <?php foreach ($products as $product): ?>
-            
-            <?php 
-                // Filter by category if selected
-                if ($category != 'all' && strtolower($product['category']) != strtolower($category)) {
-                    continue; 
-                } 
-            ?>
+                        <?php if ((int) $item['stock_qty'] <= 0): ?>
+                            <span class="badge" style="left: 10px; right: auto; background: #111;">OUT OF STOCK</span>
+                        <?php endif; ?>
 
-            <div class="product-card" onclick="window.location.href='product.php?id=<?php echo $product['id']; ?>'" style="cursor: pointer;">
+                        <a href="product.php?id=<?= (int) $item['id'] ?>" style="text-decoration: none; color: inherit; flex-grow: 1;">
+                            <img src="<?= h($item['image']) ?>" alt="<?= h($item['name']) ?>" class="product-img">
 
-                <?php if(!empty($product['tag'])): ?>
-                    <span class="badge"><?php echo $product['tag']; ?></span>
-                <?php endif; ?>
+                            <h3 style="font-family: var(--font-varsity); font-size: 1.1rem; margin-bottom: 5px;"><?= h($item['name']) ?></h3>
 
-                <div class="card-img">
-                    <img src="<?php echo !empty($product['image']) 
-                        ? str_replace('\\', '/', $product['image']) 
-                        : 'uploads/products/default.jpg'; ?>" 
-                        alt="<?php echo $product['name']; ?>">
-                </div>
+                            <div style="color: #FFD700; font-size: 0.8rem; margin-bottom: 10px; letter-spacing: 2px;">
+                                <?php
+                                $stars = round((float) $item['rating']);
+                                echo str_repeat('★', $stars) . str_repeat('☆', 5 - $stars);
+                                ?>
+                                <span style="color: #888; letter-spacing: normal;">(<?= (int) $item['reviews'] ?>)</span>
+                            </div>
 
-                <div>
-                    <h3 style="font-size: 1.2rem;">
-                        <?php echo $product['name']; ?>
-                    </h3>
+                            <div style="display: flex; justify-content: space-between; font-family: var(--font-tech); margin-bottom: 15px; gap: 1rem;">
+                                <span style="color: #666; font-size: 0.85rem;"><?= h($item['brand']) ?></span>
+                                <span style="font-weight: bold; color: var(--au-blue); font-size: 1.1rem;">&#8377;<?= format_money($item['price']) ?></span>
+                            </div>
+                        </a>
 
-                    <div style="font-size: 0.8rem; margin: 5px 0;">
-                        <span class="stars">
-                            <?php echo str_repeat("★", round($product['rating'])); ?>
-                        </span>
-                        <span style="color: #666;">
-                            (<?php echo $product['reviews']; ?>)
-                        </span>
+                        <div style="display: flex; gap: 10px; margin-top: 12px;">
+                            <button
+                                class="btn"
+                                style="<?= $buttonStyle ?>"
+                                onclick="addToCart(<?= (int) $item['id'] ?>, '<?= h($defaultSize) ?>', this)"
+                                <?= (int) $item['stock_qty'] <= 0 ? 'disabled' : '' ?>
+                            >
+                                ADD TO CART
+                            </button>
+
+                            <?php if (is_logged_in()): ?>
+                                <form method="POST" action="wishlist_action.php" style="margin: 0;">
+                                    <?= csrf_input() ?>
+                                    <input type="hidden" name="product_id" value="<?= (int) $item['id'] ?>">
+                                    <input type="hidden" name="action" value="<?= in_array((int) $item['id'], $wishlistIds, true) ? 'remove' : 'add' ?>">
+                                    <button type="submit" class="wishlist-btn <?= in_array((int) $item['id'], $wishlistIds, true) ? 'active' : '' ?>">
+                                        <?= in_array((int) $item['id'], $wishlistIds, true) ? 'SAVED' : 'SAVE' ?>
+                                    </button>
+                                </form>
+                            <?php endif; ?>
+                        </div>
                     </div>
-
-                    <div style="display: flex; justify-content: space-between; margin-top: 10px; font-family: var(--font-tech);">
-                        <span><?php echo $product['brand']; ?></span>
-                        <span style="font-weight: bold;">
-                            ₹<?php echo $product['price']; ?>
-                        </span>
-                    </div>
-
-                    <a href="cart_action.php?action=add&id=<?php echo $product['id']; ?>" onclick="event.stopPropagation();">
-                        <button class="btn" style="width: 100%; margin-top: 15px;">
-                            ADD TO CART
-                        </button>
-                    </a>
-                </div>
-
+                <?php endforeach; ?>
             </div>
 
-        <?php endforeach; ?>
-
+            <?php if ($catalog['pages'] > 1): ?>
+                <div class="pagination">
+                    <?php for ($i = 1; $i <= $catalog['pages']; $i++): ?>
+                        <?php if ($i === $catalog['page']): ?>
+                            <span class="current"><?= $i ?></span>
+                        <?php else: ?>
+                            <a href="?<?= shop_query(['page' => $i]) ?>"><?= $i ?></a>
+                        <?php endif; ?>
+                    <?php endfor; ?>
+                </div>
+            <?php endif; ?>
+        <?php endif; ?>
     </main>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const slider = document.getElementById('priceSlider');
+        const display = document.getElementById('priceDisplay');
+        const form = document.getElementById('filterForm');
+
+        slider.addEventListener('input', function() {
+            display.textContent = this.value;
+        });
+
+        slider.addEventListener('change', function() {
+            form.submit();
+        });
+    });
+
+    function addToCart(productId, size, btnElement) {
+        if (btnElement.disabled) {
+            return;
+        }
+
+        btnElement.disabled = true;
+        auPost('cart_action.php', {
+            action: 'add',
+            product_id: productId,
+            size: size,
+            quantity: 1
+        }).then(data => {
+            const originalText = btnElement.innerText;
+            btnElement.innerText = 'ADDED [OK]';
+            btnElement.style.background = 'var(--au-gold)';
+            btnElement.style.color = 'var(--au-blue)';
+
+            document.querySelectorAll('a[href="cart.php"]').forEach(el => {
+                if (el.innerText.includes('Cart')) {
+                    el.innerText = `Cart (${data.count})`;
+                }
+            });
+
+            setTimeout(() => {
+                btnElement.innerText = originalText;
+                btnElement.style.background = 'transparent';
+                btnElement.style.color = 'inherit';
+                btnElement.disabled = false;
+            }, 1600);
+        }).catch(err => {
+            alert(err.message || 'Unable to add the item to cart.');
+            btnElement.disabled = false;
+        });
+    }
+</script>
 
 <?php include 'includes/footer.php'; ?>

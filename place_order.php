@@ -1,52 +1,50 @@
 <?php
-session_start();
-require_once 'includes/db.php';
+require_once 'includes/bootstrap.php';
 
-// Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
-    die(json_encode(['status' => 'error', 'message' => 'Please login to complete purchase.']));
+header('Content-Type: application/json');
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(['success' => false, 'message' => 'Method not allowed.']);
+    exit;
 }
 
-// Get JSON input
-$data = json_decode(file_get_contents("php://input"), true);
+require_login('login.php');
+require_valid_csrf();
 
-if ($data) {
-    try {
-        $pdo->beginTransaction();
-
-        // 1. Create Order
-        $stmt = $pdo->prepare("INSERT INTO orders (user_id, total_amount, shipping_address, payment_method) VALUES (?, ?, ?, ?)");
-        $stmt->execute([
-            $_SESSION['user_id'], 
-            $data['total'], 
-            $data['address'], 
-            $data['method']
-        ]);
-        $order_id = $pdo->lastInsertId();
-
-        // 2. Move Cart Items to Order Items
-        foreach ($_SESSION['cart'] as $pid => $qty) {
-            // Get current price
-            $p_stmt = $pdo->prepare("SELECT price FROM products WHERE id = ?");
-            $p_stmt->execute([$pid]);
-            $price = $p_stmt->fetchColumn();
-
-            // Insert Item
-            $item_stmt = $pdo->prepare("INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)");
-            $item_stmt->execute([$order_id, $pid, $qty, $price]);
-        }
-
-        // 3. Clear Cart
-        unset($_SESSION['cart']);
-        
-        $pdo->commit();
-        echo json_encode(['status' => 'success', 'order_id' => 'AU-2026-' . $order_id]);
-
-    } catch (Exception $e) {
-        $pdo->rollBack();
-        echo json_encode(['status' => 'error', 'message' => 'Database Error: ' . $e->getMessage()]);
-    }
-} else {
-    echo json_encode(['status' => 'error', 'message' => 'No data received']);
+if (!razorpay_enabled()) {
+    http_response_code(422);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Razorpay is not configured yet. Add your Razorpay keys to continue.',
+    ]);
+    exit;
 }
-?>
+
+$result = create_pending_checkout_order($pdo, $_POST);
+
+if (!$result['success']) {
+    http_response_code(422);
+    echo json_encode($result);
+    exit;
+}
+
+$order = $result['order'];
+$gatewayOrder = $result['gateway_order'];
+$user = current_user_record($pdo);
+
+echo json_encode([
+    'success' => true,
+    'local_order_id' => (int) $order['id'],
+    'order_number' => order_number($order['id']),
+    'gateway_order_id' => $gatewayOrder['id'],
+    'amount' => (int) $gatewayOrder['amount'],
+    'currency' => APP_CURRENCY,
+    'key_id' => RAZORPAY_KEY_ID,
+    'store_name' => APP_NAME,
+    'prefill' => [
+        'name' => $order['shipping_name'],
+        'email' => $user['email'] ?? '',
+        'contact' => $order['phone'],
+    ],
+]);
