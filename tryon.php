@@ -29,40 +29,430 @@ include 'includes/header.php';
 <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
 
 <style>
-    body { background-color: #050505; color: #00f3ff; overflow-x: hidden; }
-    .navbar { background: #000; border-bottom: 1px solid #333; }
-    .nav-links a, .logo { color: #fff; }
-    .lab-container { display: grid; grid-template-columns: 320px 1fr 320px; min-height: calc(100vh - 100px); }
-    .panel { border-right: 1px solid #333; padding: 2rem; background: #0a0a0a; overflow-y: auto; max-height: calc(100vh - 100px); position: relative; z-index: 5; }
-    .panel-right { border-left: 1px solid #333; border-right: none; }
-    .panel-center { display: flex; flex-direction: column; align-items: center; gap: 1.25rem; justify-content: flex-start; background: radial-gradient(circle at center, #111 0%, #000 100%); padding: 2rem; }
-    .garment-item { padding: 15px; border: 1px solid #333; margin-bottom: 10px; cursor: pointer; display: flex; gap: 12px; transition: 0.3s; }
-    .garment-item:hover, .garment-item.selected { border-color: #00f3ff; background: rgba(0, 243, 255, 0.1); }
-    .garment-thumb { width: 52px; height: 52px; background: #222; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
-    .upload-area { width: 100%; max-width: 860px; min-height: 150px; border: 2px dashed #333; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; background: #0a0a0a; overflow: hidden; padding: 1.5rem; text-align: center; }
+    :root {
+        --lab-nav-height: 76px;
+        --lab-gap: 14px;
+    }
+    html { height: 100%; }
+    body.lab-page {
+        background:
+            linear-gradient(90deg, rgba(0, 243, 255, 0.05) 1px, transparent 1px),
+            radial-gradient(circle at top, rgba(0, 243, 255, 0.08), transparent 40%),
+            #050505;
+        background-size: 48px 100%, auto, auto;
+        color: #00f3ff;
+        overflow: hidden;
+        min-height: 100dvh;
+        font-family: "Courier New", monospace;
+        text-transform: uppercase;
+    }
+    .navbar {
+        background: #000;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+        height: var(--lab-nav-height);
+        padding: 0.95rem 1.5rem;
+        position: relative;
+    }
+    .nav-links { gap: 1rem; }
+    .nav-links a, .logo {
+        color: #fff;
+        font-family: "Courier New", monospace;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+    }
+    .logo { font-size: 1.35rem; white-space: nowrap; }
+    .lab-container {
+        display: grid;
+        grid-template-columns: minmax(220px, 286px) minmax(0, 1fr) minmax(220px, 240px);
+        gap: var(--lab-gap);
+        height: calc(100dvh - var(--lab-nav-height));
+        min-height: 0;
+        padding: var(--lab-gap);
+    }
+    .panel {
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 0;
+        padding: 1rem;
+        background: rgba(8, 8, 8, 0.94);
+        overflow: hidden;
+        position: relative;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+    .panel-center {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        min-height: 0;
+        padding: 0.25rem 0;
+        overflow: visible;
+    }
+    .lab-title {
+        margin-bottom: 0.95rem;
+        font-size: 0.98rem;
+        letter-spacing: 0.02em;
+    }
+    .garment-item {
+        padding: 0.8rem 0.9rem;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        cursor: pointer;
+        display: flex;
+        gap: 12px;
+        transition: 0.25s ease;
+        border-radius: 0;
+        align-items: center;
+        background: rgba(10, 10, 10, 0.92);
+    }
+    .garment-item:hover, .garment-item.selected {
+        border-color: #00f3ff;
+        background: rgba(0, 243, 255, 0.08);
+        box-shadow: inset 0 0 0 1px rgba(0, 243, 255, 0.15);
+    }
+    .garment-thumb {
+        width: 34px;
+        height: 34px;
+        background: #222;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        flex-shrink: 0;
+        border-radius: 0;
+    }
+    .asset-caption {
+        font-family: Georgia, "Times New Roman", serif;
+        font-weight: 700;
+        font-size: 0.88rem;
+        line-height: 1.15;
+        color: #fff;
+        text-transform: none;
+    }
+    .asset-price {
+        margin-top: 0.2rem;
+        color: #00f3ff;
+        font-size: 0.78rem;
+    }
+    .canvas-stage {
+        width: min(100%, 500px);
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: center;
+        min-height: 0;
+    }
+    .stage-frame {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        border: 2px solid #00f3ff;
+        background: rgba(0, 0, 0, 0.92);
+        box-shadow: 0 0 28px rgba(0, 243, 255, 0.18);
+        min-height: 0;
+    }
+    .stage-toolbar {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 4;
+        display: flex;
+        gap: 8px;
+    }
+    .control-mini-btn {
+        min-height: 34px;
+        padding: 0.55rem 0.8rem;
+        border: 1px solid #00f3ff;
+        background: rgba(0, 0, 0, 0.88);
+        color: #00f3ff;
+        font-family: "Courier New", monospace;
+        font-size: 0.66rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: 0.2s ease;
+    }
+    .control-mini-btn:hover:not(:disabled) {
+        background: rgba(0, 243, 255, 0.14);
+        box-shadow: 0 0 14px rgba(0, 243, 255, 0.24);
+    }
+    .control-mini-btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+    }
+    .canvas-shell {
+        position: relative;
+        width: 100%;
+        min-height: clamp(380px, 62vh, 640px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #060606;
+        overflow: hidden;
+    }
+    .upload-area {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        border: 1px dashed rgba(0, 243, 255, 0.32);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: rgba(6, 6, 6, 0.9);
+        overflow: hidden;
+        padding: 1rem;
+        text-align: center;
+        transition: opacity 0.2s ease;
+        z-index: 2;
+    }
+    .upload-area.is-loaded {
+        opacity: 0;
+        pointer-events: none;
+    }
     .upload-area input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-    .upload-area img { max-width: 100%; max-height: 220px; object-fit: contain; }
-    .lab-actions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; width: 100%; max-width: 860px; }
-    .tryon-btn { width: 100%; padding: 16px; background: transparent; border: 2px solid #00f3ff; color: #00f3ff; font-family: var(--font-tech); font-weight: bold; cursor: pointer; transition: 0.3s; }
+    .upload-area img { max-width: 100%; max-height: 280px; object-fit: contain; }
+    .upload-hint {
+        display: none;
+        color: #8edfe5;
+        font-size: 0.72rem;
+        letter-spacing: 0.05em;
+    }
+    #canvasContainer {
+        display: none;
+        width: 100%;
+        height: 100%;
+        min-height: inherit;
+        max-width: 100%;
+        position: relative;
+        overflow: hidden;
+        align-items: center;
+        justify-content: center;
+    }
+    #canvasContainer.active { display: flex; }
+    #canvasContainer .canvas-container,
+    #canvasContainer canvas {
+        max-width: 100%;
+        max-height: 100%;
+    }
+    #filterControls {
+        display: none;
+        width: 100%;
+        background: rgba(10, 10, 10, 0.95);
+        border-top: 1px solid rgba(0, 243, 255, 0.85);
+        padding: 14px 16px 12px;
+        overflow: hidden;
+    }
+    .controls-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px 16px;
+        align-items: end;
+    }
+    .control-card {
+        min-width: 0;
+    }
+    .control-card--wide { grid-column: 1 / -1; }
+    .control-label {
+        display: block;
+        margin-bottom: 8px;
+        color: #d4ffff;
+        font-size: 0.72rem;
+        letter-spacing: 0.03em;
+    }
+    .control-select {
+        width: 100%;
+        min-height: 40px;
+        padding: 0.7rem 0.8rem;
+        background: #02090a;
+        color: #00f3ff;
+        border: 1px solid #00f3ff;
+        border-radius: 0;
+        font-family: "Courier New", monospace;
+        text-transform: uppercase;
+    }
+    .color-picker-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 40px;
+    }
+    .color-picker-input {
+        width: 128px;
+        height: 34px;
+        padding: 0;
+        border: 1px solid #00f3ff;
+        border-radius: 0;
+        background: #02090a;
+        cursor: pointer;
+        overflow: hidden;
+        flex: 0 0 auto;
+    }
+    .color-picker-input::-webkit-color-swatch-wrapper { padding: 0; }
+    .color-picker-input::-webkit-color-swatch { border: none; }
+    .color-preview {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+    }
+    .color-chip {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        box-shadow: 0 0 10px rgba(0, 243, 255, 0.25);
+        flex: 0 0 auto;
+    }
+    .color-code {
+        color: #8df8ff;
+        font-size: 0.74rem;
+        letter-spacing: 0.05em;
+        white-space: nowrap;
+    }
+    .slider-value {
+        float: right;
+        color: #00f3ff;
+        font-size: 0.78rem;
+    }
+    .tolerance-slider {
+        width: 100%;
+        height: 7px;
+        appearance: none;
+        background: linear-gradient(90deg, rgba(0, 243, 255, 0.95), rgba(255, 255, 255, 0.22));
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 999px;
+        cursor: pointer;
+    }
+    .tolerance-slider::-webkit-slider-thumb {
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #00f3ff;
+        border: none;
+        box-shadow: 0 0 10px rgba(0, 243, 255, 0.9);
+    }
+    .tolerance-slider::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #00f3ff;
+        border: none;
+        box-shadow: 0 0 10px rgba(0, 243, 255, 0.9);
+    }
+    .tolerance-slider::-moz-range-track {
+        height: 7px;
+        background: linear-gradient(90deg, rgba(0, 243, 255, 0.95), rgba(255, 255, 255, 0.22));
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 999px;
+    }
+    .lab-actions {
+        display: flex;
+        justify-content: center;
+        width: min(100%, 350px);
+    }
+    .tryon-btn {
+        width: 100%;
+        min-height: 44px;
+        padding: 12px 14px;
+        background: rgba(0, 0, 0, 0.84);
+        border: 1px solid #00f3ff;
+        color: #00f3ff;
+        font-family: "Courier New", monospace;
+        font-weight: bold;
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: 0.3s;
+        border-radius: 0;
+    }
     .tryon-btn:hover:not(:disabled) { background: #00f3ff; color: #000; box-shadow: 0 0 20px rgba(0, 243, 255, 0.5); }
     .tryon-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-    .metrics-card { border: 1px solid #333; padding: 1rem; margin-bottom: 1rem; }
-    #canvasContainer { display: none; border: 2px solid #00f3ff; box-shadow: 0 0 20px rgba(0, 243, 255, 0.2); background: #111; max-width: 100%; position: relative; }
-    #filterControls { display: none; width: 100%; max-width: 860px; background: rgba(0,0,0,0.92); border: 1px solid #00f3ff; padding: 14px; font-family: var(--font-tech); }
-    .status-line { width: 100%; max-width: 860px; min-height: 24px; font-family: var(--font-tech); color: #00f3ff; }
-    .subtle { color: #888; font-size: 0.8rem; }
-    @media (max-width: 1100px) {
-        .lab-container { grid-template-columns: 1fr; }
-        .panel { border: none; border-bottom: 1px solid #333; max-height: none; }
-        .lab-actions { grid-template-columns: 1fr 1fr; }
+    .status-line {
+        width: min(100%, 500px);
+        min-height: 20px;
+        color: #00f3ff;
+        font-size: 0.72rem;
+        letter-spacing: 0.04em;
+        text-align: center;
+    }
+    .subtle {
+        color: #888;
+        font-size: 0.76rem;
+        line-height: 1.5;
+        text-transform: none;
+    }
+    #garmentList { min-height: 0; overflow: auto; padding-right: 4px; display: grid; gap: 0.75rem; align-content: start; }
+    .metrics-stack { min-height: 0; overflow: auto; padding-right: 4px; }
+    .metrics-card {
+        margin-bottom: 1.6rem;
+    }
+    .metric-label {
+        color: #767676;
+        font-size: 0.74rem;
+        margin-bottom: 0.35rem;
+    }
+    .metric-value {
+        color: #fff;
+        font-size: 0.9rem;
+        line-height: 1.35;
+    }
+    .metric-value--green {
+        color: #39ff14;
+    }
+    .workflow-card {
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        padding: 1rem 0.9rem;
+        font-size: 0.75rem;
+        color: #9b9b9b;
+        line-height: 1.6;
+        background: rgba(255, 255, 255, 0.01);
+        text-transform: none;
+    }
+    #garmentList::-webkit-scrollbar, .metrics-stack::-webkit-scrollbar { width: 6px; }
+    #garmentList::-webkit-scrollbar-thumb, .metrics-stack::-webkit-scrollbar-thumb { background: rgba(0, 243, 255, 0.35); border-radius: 999px; }
+    @media (max-height: 900px) {
+        :root { --lab-nav-height: 70px; --lab-gap: 12px; }
+        .navbar { padding: 0.75rem 1.25rem; }
+        .panel { padding: 0.85rem; }
+        .lab-title { margin-bottom: 0.55rem; font-size: 0.9rem; }
+        .canvas-shell { min-height: clamp(320px, 58vh, 560px); }
+        .tryon-btn { padding: 10px 8px; font-size: 0.68rem; }
+    }
+    @media (max-width: 1200px) {
+        .lab-container { grid-template-columns: 210px minmax(0, 1fr) 210px; }
+        .canvas-stage, .status-line { width: min(100%, 440px); }
+    }
+    @media (max-width: 980px) {
+        body.lab-page { overflow: auto; }
+        .navbar { min-height: auto; padding: 1rem; flex-wrap: wrap; gap: 0.75rem; }
+        .lab-container { grid-template-columns: 1fr; height: auto; min-height: calc(100dvh - var(--lab-nav-height)); }
+        .panel, .panel-center { min-height: auto; }
+        #garmentList, .metrics-stack { overflow: visible; }
+        .panel-center { order: -1; }
+        .canvas-stage, .status-line { width: min(100%, 520px); }
+    }
+    @media (max-width: 760px) {
+        .controls-grid { grid-template-columns: 1fr; }
+        .color-picker-row { flex-wrap: wrap; }
+        .color-picker-input { width: 100%; }
+        .stage-toolbar {
+            position: static;
+            padding: 10px 10px 0;
+            flex-wrap: wrap;
+        }
     }
     @media (max-width: 680px) {
-        .lab-actions { grid-template-columns: 1fr; }
+        .canvas-shell { min-height: 420px; }
+        .lab-actions { width: 100%; }
     }
 </style>
 </head>
 
-<body>
+<body class="lab-page">
     <div class="cursor-dot"></div><div class="cursor-outline"></div>
 
     <nav class="navbar">
@@ -74,8 +464,7 @@ include 'includes/header.php';
 
     <div class="lab-container">
         <div class="panel">
-            <h3 style="font-family: var(--font-tech); margin-bottom: 1.5rem;">&gt; SELECT_ASSET</h3>
-            <p class="subtle" style="margin-bottom: 1rem;">Click any garment to place it onto the uploaded photo.</p>
+            <h3 class="lab-title">&gt; SELECT_ASSET</h3>
             <div id="garmentList">
                 <?php foreach ($catalog as $product): ?>
                     <?php $isSelected = (int) $product['id'] === $selectedProductId; ?>
@@ -91,9 +480,8 @@ include 'includes/header.php';
                             <img src="<?= h($product['image']) ?>" alt="" style="max-width:100%; max-height:100%; object-fit:contain;">
                         </div>
                         <div>
-                            <div style="font-weight: bold; color: #fff;"><?= h($product['name']) ?></div>
-                            <div style="font-family: var(--font-tech); color: #00f3ff; font-size: 0.8rem;">&#8377;<?= format_money($product['price']) ?></div>
-                            <div style="font-size: 0.75rem; color: #888;"><?= h(strtoupper($product['category'])) ?></div>
+                            <div class="asset-caption"><?= h($product['name']) ?></div>
+                            <div class="asset-price">&#8377;<?= format_money($product['price']) ?></div>
                         </div>
                     </div>
                 <?php endforeach; ?>
@@ -101,79 +489,91 @@ include 'includes/header.php';
         </div>
 
         <div class="panel-center">
-            <div class="upload-area">
-                <input type="file" id="userImageInput" accept="image/*">
-                <div id="uploadPlaceholder">
-                    <div style="font-size: 3rem; color: #333;">[PHOTO]</div>
-                    <div style="color: #666; font-family: var(--font-tech); font-size: 0.8rem; margin-top: 10px;">
-                        UPLOAD FULL BODY PHOTO<br><span style="color: #00f3ff;">PROCESSING STAYS IN YOUR BROWSER</span>
+            <div class="canvas-stage">
+                <div class="stage-frame">
+                    <div class="stage-toolbar">
+                        <button class="control-mini-btn" id="placeGarmentBtn" disabled>[+] Load</button>
+                        <button class="control-mini-btn" id="removeSelectedBtn" disabled>[-] Remove</button>
+                        <button class="control-mini-btn" id="resetBtn" disabled>[x] Reset</button>
+                    </div>
+                    <div class="canvas-shell">
+                        <div class="upload-area">
+                            <input type="file" id="userImageInput" accept="image/*">
+                            <div id="uploadPlaceholder">
+                                <div style="font-size: 3rem; color: #333;">[PHOTO]</div>
+                                <div style="color: #666; font-size: 0.8rem; margin-top: 10px;">
+                                    Upload full body photo<br><span style="color: #00f3ff;">Processing stays in your browser</span>
+                                </div>
+                            </div>
+                            <img id="previewImage" alt="" style="display:none;">
+                            <div class="upload-hint">Photo locked in lab preview. Click again to replace it.</div>
+                        </div>
+                        <div id="canvasContainer">
+                            <canvas id="tCanvas"></canvas>
+                        </div>
+                    </div>
+                    <div id="filterControls">
+                        <div class="controls-grid">
+                            <div class="control-card control-card--wide">
+                                <label class="control-label" for="blendModeSelector">&gt; Blend_Mode</label>
+                                <select id="blendModeSelector" class="control-select">
+                                    <option value="source-over">NORMAL</option>
+                                    <option value="multiply">MULTIPLY</option>
+                                    <option value="darken">DARKEN</option>
+                                </select>
+                            </div>
+                            <div class="control-card">
+                                <label class="control-label" for="bgColorPicker">&gt; Target_Color</label>
+                                <div class="color-picker-row">
+                                    <input type="color" id="bgColorPicker" value="#ffffff" class="color-picker-input">
+                                    <div class="color-preview">
+                                        <span class="color-chip" id="colorChip" style="background:#ffffff;"></span>
+                                        <span class="color-code" id="colorValue">#FFFFFF</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="control-card">
+                                <label class="control-label" for="toleranceSlider">&gt; Tolerance: <span id="toleranceVal" class="slider-value">10%</span></label>
+                                <input type="range" id="toleranceSlider" min="0" max="60" value="10" class="tolerance-slider">
+                            </div>
+                        </div>
+                        <div class="subtle" style="margin-top: 12px;">
+                            *Warning: Removes all pixels matching the target color.
+                        </div>
                     </div>
                 </div>
-                <img id="previewImage" alt="" style="display:none;">
             </div>
 
             <div class="lab-actions">
-                <button class="tryon-btn" id="placeGarmentBtn" disabled>&gt; LOAD SELECTED GARMENT</button>
-                <button class="tryon-btn" id="removeSelectedBtn" disabled>&gt; REMOVE SELECTED</button>
-                <button class="tryon-btn" id="downloadBtn" disabled>&gt; DOWNLOAD COMPOSITION</button>
-                <button class="tryon-btn" id="resetBtn" disabled>&gt; RESET LAB</button>
-            </div>
-
-            <div id="canvasContainer">
-                <canvas id="tCanvas"></canvas>
-            </div>
-
-            <div id="filterControls">
-                <div style="display:flex; gap:12px; align-items:end; flex-wrap:wrap;">
-                    <div style="flex:1; min-width:180px;">
-                        <label style="display:block; margin-bottom:6px;">&gt; BLEND MODE</label>
-                        <select id="blendModeSelector" style="width:100%; padding:8px; background:#000; color:#00f3ff; border:1px solid #00f3ff; font-family:var(--font-tech);">
-                            <option value="source-over">NORMAL</option>
-                            <option value="multiply">MULTIPLY</option>
-                            <option value="darken">DARKEN</option>
-                        </select>
-                    </div>
-                    <div style="flex:1; min-width:180px;">
-                        <label style="display:block; margin-bottom:6px;">&gt; TARGET COLOR</label>
-                        <input type="color" id="bgColorPicker" value="#ffffff" style="width:100%; height:38px; cursor:pointer; border:1px solid #00f3ff; background:#000; padding:2px;">
-                    </div>
-                    <div style="flex:1; min-width:220px;">
-                        <label style="display:block; margin-bottom:6px;">&gt; TOLERANCE <span id="toleranceVal">10%</span></label>
-                        <input type="range" id="toleranceSlider" min="0" max="60" value="10" style="width:100%; accent-color:#00f3ff; cursor:pointer;">
-                    </div>
-                </div>
-                <div class="subtle" style="margin-top: 12px;">
-                    Use `MULTIPLY` or `DARKEN` for bright garments, and fine-tune the background color and tolerance for cleaner edges.
-                </div>
+                <button class="tryon-btn" id="downloadBtn" disabled>&gt; Download Composition</button>
             </div>
 
             <div id="statusMsg" class="status-line"></div>
         </div>
 
         <div class="panel panel-right">
-            <h3 style="font-family: var(--font-tech); margin-bottom: 1.5rem;">&gt; METRICS</h3>
-            <div class="metrics-card">
-                <p class="subtle" style="margin-bottom: 6px;">SELECTED PRODUCT</p>
-                <p id="selectedProductName" style="color: #fff;"><?= h($selectedProduct['name'] ?? 'None') ?></p>
+            <h3 class="lab-title">&gt; METRICS</h3>
+            <div class="metrics-stack">
+            <div class="metrics-card" style="margin-top: 1.6rem;">
+                <p class="metric-label">Selected_Product</p>
+                <p id="selectedProductName" class="metric-value"><?= h($selectedProduct['name'] ?? 'None') ?></p>
                 <p id="selectedProductMeta" class="subtle" style="margin-top: 8px;">
                     <?= $selectedProduct ? h(strtoupper($selectedProduct['category'])) . ' // ₹' . h(format_money($selectedProduct['price'])) : 'NO PRODUCT SELECTED' ?>
                 </p>
             </div>
             <div class="metrics-card">
-                <p class="subtle" style="margin-bottom: 6px;">LAB MODE</p>
-                <p style="color: #00ff99;">LOCAL FABRIC.JS COMPOSITOR</p>
+                <p class="metric-label">Render_Engine</p>
+                <p class="metric-value">FABRIC.JS w/ COMPOSITING</p>
             </div>
             <div class="metrics-card">
-                <p class="subtle" style="margin-bottom: 6px;">PRIVACY</p>
-                <p style="color:#fff;">Your photo stays in the browser. No backend try-on request is sent.</p>
+                <p class="metric-label">Latency</p>
+                <p class="metric-value metric-value--green">ZERO-LAG (CLIENT SIDE)</p>
             </div>
-            <div style="border: 1px solid #333; padding: 1rem; font-size: 0.8rem; color: #888; line-height: 1.6;">
-                <strong style="color: #00f3ff;">WORKFLOW:</strong><br><br>
-                1. Upload a clear full-body photo.<br><br>
-                2. Click a garment from the left panel to place it on the canvas.<br><br>
-                3. Drag, resize, or rotate the garment handles until it fits.<br><br>
-                4. Adjust blend mode and chroma key controls for a cleaner look.<br><br>
-                5. Download the final composition.
+            <div class="workflow-card">
+                <strong style="color: #00f3ff; text-transform: uppercase;">Pro-Tips:</strong><br><br>
+                1. If a shirt has a white background, change the <strong style="color:#fff;">Blend Mode</strong> to <strong style="color:#fff;">Multiply</strong>.<br><br>
+                2. Use the <strong style="color:#fff;">Target Color Picker</strong> to select exactly which background color to remove.
+            </div>
             </div>
         </div>
     </div>
@@ -210,11 +610,21 @@ include 'includes/header.php';
         const selectedProductName = document.getElementById('selectedProductName');
         const selectedProductMeta = document.getElementById('selectedProductMeta');
         const canvasContainer = document.getElementById('canvasContainer');
+        const canvasStage = document.querySelector('.canvas-shell');
+        const uploadArea = document.querySelector('.upload-area');
         const bgColorPicker = document.getElementById('bgColorPicker');
         const toleranceSlider = document.getElementById('toleranceSlider');
         const toleranceVal = document.getElementById('toleranceVal');
         const blendModeSelector = document.getElementById('blendModeSelector');
         const filterControls = document.getElementById('filterControls');
+        const colorChip = document.getElementById('colorChip');
+        const colorValue = document.getElementById('colorValue');
+
+        function syncColorPreview(color) {
+            const safeColor = color || '#ffffff';
+            colorChip.style.background = safeColor;
+            colorValue.textContent = safeColor.toUpperCase();
+        }
 
         function setStatus(message, tone = '#00f3ff') {
             statusMsg.textContent = message;
@@ -245,6 +655,21 @@ include 'includes/header.php';
             downloadBtn.disabled = !backgroundLoaded;
             resetBtn.disabled = !backgroundLoaded;
             filterControls.style.display = backgroundLoaded ? 'block' : 'none';
+            canvasContainer.classList.toggle('active', backgroundLoaded);
+        }
+
+        function syncUploadState() {
+            uploadArea.classList.toggle('is-loaded', !!userImageUrl);
+        }
+
+        function getCanvasBounds() {
+            const stageWidth = canvasStage ? canvasStage.clientWidth : 0;
+            const stageHeight = canvasStage ? canvasStage.clientHeight : 0;
+
+            return {
+                width: Math.max(Math.min(stageWidth - 24, 860), 260),
+                height: Math.max(stageHeight - 24, 240)
+            };
         }
 
         function activeRemoveColorFilter() {
@@ -263,6 +688,7 @@ include 'includes/header.php';
                 bgColorPicker.value = '#ffffff';
                 toleranceSlider.value = 10;
                 toleranceVal.textContent = '10%';
+                syncColorPreview('#ffffff');
                 syncButtons();
                 return;
             }
@@ -272,6 +698,7 @@ include 'includes/header.php';
             bgColorPicker.value = filter.color || '#ffffff';
             toleranceSlider.value = Math.round((filter.distance || 0.1) * 100);
             toleranceVal.textContent = toleranceSlider.value + '%';
+            syncColorPreview(bgColorPicker.value);
             syncButtons();
         }
 
@@ -282,22 +709,27 @@ include 'includes/header.php';
             }
 
             fabric.Image.fromURL(userImageUrl, function(img) {
-                const maxWidth = Math.min(window.innerWidth * 0.78, 860);
-                const scale = maxWidth / img.width;
-
-                canvas.clear();
-                canvas.setWidth(maxWidth);
-                canvas.setHeight(img.height * scale);
-
-                img.scale(scale);
-                img.evented = false;
-                img.selectable = false;
-
-                canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas));
-                canvasContainer.style.display = 'block';
                 backgroundLoaded = true;
                 syncButtons();
-                setStatus('Photo loaded. Click a garment from the left panel to start styling.');
+
+                requestAnimationFrame(() => {
+                    const bounds = getCanvasBounds();
+                    const scale = Math.min(bounds.width / img.width, bounds.height / img.height);
+                    const safeScale = Number.isFinite(scale) && scale > 0 ? scale : 1;
+
+                    canvas.clear();
+                    canvas.setDimensions({
+                        width: Math.round(img.width * safeScale),
+                        height: Math.round(img.height * safeScale)
+                    });
+
+                    img.scale(safeScale);
+                    img.evented = false;
+                    img.selectable = false;
+
+                    canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas));
+                    setStatus('Photo loaded. Click a garment from the left panel to start styling.');
+                });
             });
         }
 
@@ -382,9 +814,13 @@ include 'includes/header.php';
             }
 
             userImageUrl = URL.createObjectURL(file);
+            backgroundLoaded = false;
+            syncButtons();
+            syncUploadState();
             previewImage.src = userImageUrl;
             previewImage.style.display = 'block';
             uploadPlaceholder.style.display = 'none';
+            setStatus('Photo loaded into the preview. Fitting it into the lab workspace...');
             loadPhotoIntoCanvas();
         });
 
@@ -430,6 +866,7 @@ include 'includes/header.php';
         });
 
         bgColorPicker.addEventListener('input', event => {
+            syncColorPreview(event.target.value);
             const filter = activeRemoveColorFilter();
             const activeObject = canvas.getActiveObject();
             if (!filter || !activeObject) {
@@ -504,6 +941,8 @@ include 'includes/header.php';
         });
 
         setSelectedProduct(selectedProductId);
+        syncUploadState();
+        syncColorPreview(bgColorPicker.value);
         syncButtons();
     </script>
 </body>
