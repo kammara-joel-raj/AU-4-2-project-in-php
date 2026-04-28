@@ -52,7 +52,7 @@ $flash = pull_flash();
         <li><a href="shop.php" <?= $current_page === 'shop.php' ? 'style="' . $active_style . '"' : '' ?>>Shop</a></li>
         <li><a href="tryon.php" <?= $current_page === 'tryon.php' ? 'style="' . $active_style . '"' : '' ?>>Lab</a></li>
         <li><a href="about.php" <?= $current_page === 'about.php' ? 'style="' . $active_style . '"' : '' ?>>About</a></li>
-        <li><a href="locator.php" <?= $current_page === 'locator.php' ? 'style="' . $active_style . '"' : '' ?>>Locator</a></li>
+       <!-- <li><a href="locator.php" <?= $current_page === 'locator.php' ? 'style="' . $active_style . '"' : '' ?>>Locator</a></li> -->
         <li><a href="blog.php" <?= $current_page === 'blog.php' ? 'style="' . $active_style . '"' : '' ?>>Blog</a></li>
         <li><a href="faq.php" <?= $current_page === 'faq.php' ? 'style="' . $active_style . '"' : '' ?>>FAQ</a></li>
 
